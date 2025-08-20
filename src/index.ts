@@ -7,6 +7,9 @@ async function main() {
     try {
         await knex.raw('SELECT 1');
         console.log('Database connection successful!');
+
+        await knex.migrate.latest();
+        console.log('Database migrations completed successfully!');
     } catch (error) {
         console.error('Failed to connect to the database:', error);
         process.exit(1);
