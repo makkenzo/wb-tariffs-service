@@ -27,6 +27,38 @@ export class GoogleSheetsService {
         this.sheetIds = sheetIdsString.split(',').filter(Boolean);
     }
 
+    private async ensureSheetExists(spreadsheetId: string): Promise<void> {
+        try {
+            const spreadsheetInfo = await this.sheets.spreadsheets.get({
+                spreadsheetId,
+            });
+
+            const sheetExists = spreadsheetInfo.data.sheets?.some((sheet) => sheet.properties?.title === SHEET_NAME);
+
+            if (!sheetExists) {
+                console.log(`[Sheet ID: ${spreadsheetId}] Sheet not found. Creating '${SHEET_NAME}'...`);
+                await this.sheets.spreadsheets.batchUpdate({
+                    spreadsheetId,
+                    requestBody: {
+                        requests: [
+                            {
+                                addSheet: {
+                                    properties: {
+                                        title: SHEET_NAME,
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                });
+            } else {
+                console.log(`Sheet '${SHEET_NAME}' already exists in Sheet ID ${spreadsheetId}.`);
+            }
+        } catch (error) {
+            throw new Error(`Failed to ensure sheet exists: ${error}`);
+        }
+    }
+
     async updateSheets(tariffs: ActualTariff[]): Promise<void> {
         if (this.sheetIds.length === 0) {
             console.log('No Google Sheets IDs provided. Skipping update.');
@@ -45,6 +77,8 @@ export class GoogleSheetsService {
 
         for (const sheetId of this.sheetIds) {
             try {
+                await this.ensureSheetExists(sheetId);
+
                 const range = `${SHEET_NAME}!A1`;
 
                 await this.sheets.spreadsheets.values.clear({
