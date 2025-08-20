@@ -1,5 +1,6 @@
 import type { Knex } from 'knex';
 import { config as dotenvConfig } from 'dotenv';
+import path from 'path';
 
 dotenvConfig();
 
@@ -15,56 +16,42 @@ interface KnexConfig {
     production: Knex.Config;
 }
 
+const baseConfig: Partial<Knex.Config> = {
+    client: 'postgresql',
+    connection: {
+        host: getEnv('DB_HOST'),
+        user: getEnv('DB_USER'),
+        password: getEnv('DB_PASSWORD'),
+        database: getEnv('DB_DATABASE'),
+    },
+    pool: {
+        min: 2,
+        max: 10,
+    },
+};
+
 const knexConfig: KnexConfig = {
     development: {
-        client: 'postgresql',
-        connection: {
-            host: getEnv('DB_HOST'),
-            user: getEnv('DB_USER'),
-            password: getEnv('DB_PASSWORD'),
-            database: getEnv('DB_DATABASE'),
-        },
-        pool: {
-            min: 2,
-            max: 10,
-        },
+        ...baseConfig,
         migrations: {
-            directory: './src/db/migrations',
+            directory: path.resolve(__dirname, 'src/db/migrations'),
             extension: 'ts',
         },
     },
 
     staging: {
-        client: 'postgresql',
-        connection: {
-            host: getEnv('DB_HOST'),
-            user: getEnv('DB_USER'),
-            password: getEnv('DB_PASSWORD'),
-            database: getEnv('DB_DATABASE'),
-        },
-        pool: {
-            min: 2,
-            max: 10,
-        },
+        ...baseConfig,
         migrations: {
             tableName: 'knex_migrations',
         },
     },
 
     production: {
-        client: 'postgresql',
-        connection: {
-            host: getEnv('DB_HOST'),
-            user: getEnv('DB_USER'),
-            password: getEnv('DB_PASSWORD'),
-            database: getEnv('DB_DATABASE'),
-        },
-        pool: {
-            min: 2,
-            max: 10,
-        },
+        ...baseConfig,
         migrations: {
-            tableName: 'knex_migrations',
+            directory: path.resolve(__dirname, 'src/db/migrations'),
+            extension: 'js',
+            loadExtensions: ['.js'],
         },
     },
 };
