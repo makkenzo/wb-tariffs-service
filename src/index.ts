@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { knex } from './db/connection';
 import { WBApiService } from './services/wb.service';
 import { TariffRepository } from './db/repository';
+import { GoogleSheetsService } from './services/google.service';
 
 async function main() {
     try {
@@ -18,6 +19,7 @@ async function main() {
     try {
         const wbService = new WBApiService();
         const tariffRepo = new TariffRepository();
+        const googleService = new GoogleSheetsService();
 
         const today = new Date().toISOString().split('T')[0];
 
@@ -29,6 +31,10 @@ async function main() {
 
         if (tariffData && tariffData.warehouseList.length > 0) {
             await tariffRepo.upsertTariffs(today, tariffData.warehouseList);
+
+            const actualTariffs = await tariffRepo.getActualTariffsForSheet();
+
+            await googleService.updateSheets(actualTariffs);
         } else {
             console.log('No tariff data available for today.');
         }

@@ -1,4 +1,4 @@
-import { WBWarehouseTariff } from '../types';
+import type { ActualTariff, WBWarehouseTariff } from '../types';
 import { knex } from './connection';
 
 function parseWBNumber(value: string): number {
@@ -53,5 +53,19 @@ export class TariffRepository {
         }
 
         await knex('tariffs').insert(tariffsForDB).onConflict(['date', 'warehouseName']).merge();
+    }
+
+    async getActualTariffsForSheet(): Promise<ActualTariff[]> {
+        const today = new Date().toISOString().split('T')[0];
+        if (!today) {
+            throw new Error("Failed to get today's date");
+        }
+
+        const tariffs = await knex('tariffs')
+            .select('warehouseName', 'geoName', 'boxDeliveryCoefExpr', 'boxDeliveryBase', 'boxDeliveryLiter')
+            .where({ date: today })
+            .orderBy('boxDeliveryCoefExpr', 'asc');
+
+        return tariffs;
     }
 }

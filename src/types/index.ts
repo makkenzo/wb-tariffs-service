@@ -23,3 +23,11 @@ export interface WBBoxTariffAPIResponse {
         data: WBBoxTariffResponseData;
     };
 }
+
+export type ActualTariff = {
+    warehouseName: string;
+    geoName: string;
+    boxDeliveryCoefExpr: number;
+    boxDeliveryBase: number;
+    boxDeliveryLiter: number;
+};
